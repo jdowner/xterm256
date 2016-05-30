@@ -1,6 +1,5 @@
-#!/usr/bin/env python3
-
 import collections
+import six
 
 data = (
     ('Grey0', '16', '#000000'),
@@ -258,33 +257,36 @@ class Color(collections.namedtuple("Color", "name xterm rgb")):
     pass
 
 
-colors = [Color(n, x, RGB.from_hex(c)) for n, x, c in data]
+class ColorsMeta(type):
+    def __init__(cls, name, bases, attrs):
+        colors = list()
+        for name, xterm, hex in data:
+            color = Color(name, xterm, RGB.from_hex(hex))
+            setattr(cls, name, color)
+            colors.append(color)
+
+        setattr(cls, 'list', colors)
+
+        super(ColorsMeta, cls).__init__(name, bases, attrs)
 
 
-def nearest_xterm(rgb):
-    def diff(a, b):
-        dr = abs(a.r - b.r)
-        dg = abs(a.g - b.g)
-        db = abs(a.b - b.b)
-        return dr + dg + db
+@six.add_metaclass(ColorsMeta)
+class colors(object):
+    @staticmethod
+    def nearest_xterm(rgb):
+        def diff(a, b):
+            dr = abs(a.r - b.r)
+            dg = abs(a.g - b.g)
+            db = abs(a.b - b.b)
+            return dr + dg + db
 
-    best = colors[0].rgb
-    dbest = diff(rgb, best)
+        best = colors.list[0].rgb
+        dbest = diff(rgb, best)
 
-    for c in colors[1:]:
-        d = diff(rgb, c.rgb)
-        if d < dbest:
-            dbest = d
-            best = c
+        for c in colors.list[1:]:
+            d = diff(rgb, c.rgb)
+            if d < dbest:
+                dbest = d
+                best = c
 
-    return best
-
-
-
-def main():
-    pass
-
-
-if __name__ == "__main__":
-    main()
-
+        return best
