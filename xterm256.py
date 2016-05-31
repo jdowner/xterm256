@@ -1,4 +1,5 @@
 import collections
+import re
 import six
 
 data = (
@@ -238,6 +239,8 @@ data = (
 
 
 class RGB(collections.namedtuple("RGB", "r g b")):
+    hex_pattern = re.compile("(0x|#)([0-9a-fA-F]+)")
+
     @property
     def hex(self):
         r = self.r << 16
@@ -247,10 +250,15 @@ class RGB(collections.namedtuple("RGB", "r g b")):
 
     @classmethod
     def from_hex(cls, hex):
-        r = hex[1:3]
-        g = hex[3:5]
-        b = hex[5:7]
-        return cls(int(r, 16), int(g, 16), int(b, 16))
+        _, digits = RGB.hex_pattern.match(hex).groups()
+
+        mask = 0xff
+        deci = int(digits, 16)
+        r = (deci >> 16) & mask
+        g = (deci >> 8) & mask
+        b = deci & mask
+
+        return cls(r, g, b)
 
 
 class Color(collections.namedtuple("Color", "name xterm rgb")):
